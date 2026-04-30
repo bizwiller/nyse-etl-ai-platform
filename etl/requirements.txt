@@ -1,18 +1,1 @@
-Install Python
-Install Python 3.11 from python.org.
 
-Create a virtual environment
-In your terminal:
-
-Code
-python -m venv venv
-Activate it:
-
-Windows:
-
-Code
-venv\Scripts\activate
-macOS/Linux:
-
-Code
-source venv/bin/activate
