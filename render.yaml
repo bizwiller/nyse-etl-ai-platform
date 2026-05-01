@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: nyse-etl-ai-platform
+    env: python
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.api.parquet_api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"

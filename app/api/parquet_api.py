@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from typing import List, Optional
@@ -18,7 +19,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+
+@app.get("/", response_class=HTMLResponse)
+def serve_frontend():
+    """Serve the browser-based frontend."""
+    return FileResponse(FRONTEND_DIR / "index.html")
 
 
 @app.get("/health")

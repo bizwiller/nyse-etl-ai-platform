@@ -63,3 +63,30 @@ Open `app/frontend/index.html` in your browser, or serve it from a local web ser
 - Streamlit runs on port `8501` by default.
 - FastAPI runs on port `8000` by default.
 - The HTML UI depends on the FastAPI backend.
+
+## Deploy to Render (Free Tier)
+
+This project can be deployed to Render using the included `render.yaml` configuration.
+
+### Steps
+
+1. Push your repo to GitHub.
+2. Create a new Web Service on Render.
+3. Connect your GitHub repo and select the `main` branch.
+4. Render will use `render.yaml` and install dependencies from `requirements.txt`.
+5. The app starts with:
+   ```bash
+   uvicorn app.api.parquet_api:app --host 0.0.0.0 --port $PORT
+   ```
+
+### What is deployed
+
+- FastAPI backend at `/`
+- Browser UI served from `/`
+- API endpoints available under the same domain
+
+### Notes for Render
+
+- Render provides the runtime port in `$PORT`.
+- The HTML frontend now uses relative paths, so it works on the deployed domain.
+- Parquet data files are stored on the instance filesystem at `data/`.
