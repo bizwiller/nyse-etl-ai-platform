@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.app
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    command: ["sleep", "infinity"]

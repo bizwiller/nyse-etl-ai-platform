@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parquet Data Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+        }
+
+        header {
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 8px;
+        }
+
+        select, input {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            align-self: flex-end;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        button[style*="background: #10b981"]:hover {
+            background: #059669 !important;
+        }
+
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-card-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .info-card-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: #fafafa;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+
+        .success {
+            background: #efe;
+            color: #3c3;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3c3;
+        }
+
+        .status {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 600;">🎯 FastAPI + HTML (Production Web UI)</h2>
+            </div>
+            <h1>📊 Parquet Data Viewer</h1>
+            <p class="subtitle">View and explore parquet files from the ETL pipeline</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="tickerInput">Enter Ticker:</label>
+                <input type="text" id="tickerInput" placeholder="e.g., AAPL, GOOGL, MSFT" maxlength="5">
+            </div>
+
+            <div class="control-group">
+                <label for="periodSelect">Period:</label>
+                <select id="periodSelect">
+                    <option value="1d">1 Day</option>
+                    <option value="5d">5 Days</option>
+                    <option value="1mo" selected>1 Month</option>
+                    <option value="3mo">3 Months</option>
+                    <option value="6mo">6 Months</option>
+                    <option value="1y">1 Year</option>
+                    <option value="2y">2 Years</option>
+                    <option value="5y">5 Years</option>
+                    <option value="10y">10 Years</option>
+                    <option value="ytd">Year to Date</option>
+                    <option value="max">Max</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button onclick="fetchTicker()" style="background: #10b981;">Fetch Ticker</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="fileSelect">Select File:</label>
+                <select id="fileSelect">
+                    <option value="">Loading files...</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="rowsInput">Rows to Display:</label>
+                <input type="number" id="rowsInput" value="20" min="1" max="1000">
+            </div>
+
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button onclick="loadData()">Load Data</button>
+            </div>
+        </div>
+
+        <div id="message"></div>
+
+        <div id="infoCards" class="info-cards" style="display: none;"></div>
+
+        <div id="tableContainer" class="table-container" style="display: none;">
+            <table id="dataTable">
+                <thead>
+                    <tr id="headerRow"></tr>
+                </thead>
+                <tbody id="dataBody"></tbody>
+            </table>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            Loading data...
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        async function loadFiles() {
+            try {
+                const response = await fetch(`${API_BASE}/files`);
+                const data = await response.json();
+                const select = document.getElementById('fileSelect');
+                select.innerHTML = '';
+
+                if (data.files.length === 0) {
+                    select.innerHTML = '<option>No parquet files found</option>';
+                    return;
+                }
+
+                data.files.forEach(file => {
+                    const option = document.createElement('option');
+                    option.value = file;
+                    option.textContent = file;
+                    select.appendChild(option);
+                });
+
+                if (data.files.length > 0) {
+                    select.value = data.files[0];
+                }
+            } catch (error) {
+                showMessage('Error loading files: ' + error.message, 'error');
+            }
+        }
+
+        async function loadData() {
+            const filename = document.getElementById('fileSelect').value;
+            const nRows = document.getElementById('rowsInput').value;
+
+            if (!filename) {
+                showMessage('Please select a file', 'error');
+                return;
+            }
+
+            showLoading(true);
+            clearResults();
+
+            try {
+                const previewResponse = await fetch(`${API_BASE}/preview/${filename}?n_rows=${nRows}`);
+                if (!previewResponse.ok) throw new Error('Failed to load preview');
+
+                const preview = await previewResponse.json();
+                displayInfo(preview);
+                displayTable(preview);
+                showMessage(`Successfully loaded ${preview.preview.length} rows`, 'success');
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayInfo(preview) {
+            const infoCards = document.getElementById('infoCards');
+            infoCards.innerHTML = `
+                <div class="info-card">
+                    <div class="info-card-label">Total Rows</div>
+                    <div class="info-card-value">${preview.rows}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-label">Columns</div>
+                    <div class="info-card-value">${preview.columns.length}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-label">Preview Rows</div>
+                    <div class="info-card-value">${preview.preview.length}</div>
+                </div>
+            `;
+            infoCards.style.display = 'grid';
+        }
+
+        function displayTable(preview) {
+            if (preview.preview.length === 0) {
+                showMessage('No data to display', 'error');
+                return;
+            }
+
+            const columns = preview.columns;
+            const headerRow = document.getElementById('headerRow');
+            headerRow.innerHTML = columns.map(col => `<th>${col}</th>`).join('');
+
+            const dataBody = document.getElementById('dataBody');
+            dataBody.innerHTML = preview.preview.map(row => `
+                <tr>
+                    ${columns.map(col => `<td>${row[col] !== null ? row[col] : 'NULL'}</td>`).join('')}
+                </tr>
+            `).join('');
+
+            document.getElementById('tableContainer').style.display = 'block';
+        }
+
+        function showMessage(msg, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = type;
+            messageDiv.textContent = msg;
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function clearResults() {
+            document.getElementById('tableContainer').style.display = 'none';
+            document.getElementById('infoCards').style.display = 'none';
+            document.getElementById('message').textContent = '';
+        }
+
+        async function fetchTicker() {
+            const ticker = document.getElementById('tickerInput').value.trim();
+            const period = document.getElementById('periodSelect').value;
+
+            if (!ticker) {
+                showMessage('Please enter a ticker symbol', 'error');
+                return;
+            }
+
+            showLoading(true);
+            clearResults();
+
+            try {
+                const response = await fetch(`${API_BASE}/fetch-ticker/${ticker}?period=${period}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showMessage('Error: ' + data.detail, 'error');
+                    showLoading(false);
+                    return;
+                }
+
+                // Show success message
+                showMessage(data.message || `Successfully fetched data for ${ticker}`, 'success');
+
+                // Display the fetched data
+                displayInfo(data);
+                displayTable(data);
+
+                // Reload the file list to include the new parquet file
+                setTimeout(() => loadFiles(), 500);
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Initialize
+        loadFiles();
+    </script>
+</body>
+</html>
